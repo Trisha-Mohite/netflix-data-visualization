@@ -1,2 +1,2 @@
 # netflix-data-visualization
-netflix viewing data visualization using D3.js
+An interactive Data Visualization project exploring Netflix viewing patterns using D3.js
