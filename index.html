@@ -21,7 +21,7 @@
   <script>
     async function main() {
 
-      const raw = await d3.csv('/data/NetflixMovies_added.csv')
+      const raw = await d3.csv('data/NetflixMovies_added.csv')
       console.log('raw rows', raw.length, raw.columns)
 
       const movies = raw.map((d) => ({
