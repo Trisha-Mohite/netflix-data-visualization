@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Exercise 2</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px; }
+    h1 { font-size: 28px; margin: 0 0 6px; }
+    .subtitle { color: #777; font-size: 14px; margin: 0 0 16px; }
+    .source { color: #777; font-size: 12px; margin-top: 12px; }
+    .error { color: #b00020; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Top 10 Netflix Movies by Views</h1>
+  <p class="subtitle">Views per movie, Jan–Jun 2025</p>
+  <div id="app"></div>
+  <p class="source">Source: Netflix, What We Watched (Jan–Jun 2025)</p>
+
+  <script>
+    async function main() {
+
+      const raw = await d3.csv('/data/NetflixMovies_added.csv')
+      console.log('raw rows', raw.length, raw.columns)
+
+      const movies = raw.map((d) => ({
+        title: d.Simple_Title || d.Title,
+        views: +d.Views,
+      }))
+
+      const views_by_title = d3.rollup(
+        movies,
+        (v) => d3.sum(v, (d) => d.views),
+        (d) => d.title
+      )
+
+      const top_movies = Array.from(views_by_title)
+        .sort((a, b) => d3.descending(a[1], b[1]))
+        .slice(0, 10)
+      console.log('top movies', top_movies)
+
+      const svg = d3.create('svg').attr('viewBox', [0, 0, 600, 340])
+
+      const y_scale = d3
+        .scaleBand()
+        .domain(top_movies.map((d) => d[0]))
+        .range([10, 330])
+        .padding(0.2)
+
+      const x_scale = d3
+        .scaleLinear()
+        .domain([0, d3.max(top_movies, (d) => d[1])])
+        .range([200, 540])
+
+      const g = svg.append('g').selectAll('g').data(top_movies).join('g')
+
+      g.append('rect')
+        .attr('x', x_scale(0))
+        .attr('y', (d) => y_scale(d[0]))
+        .attr('width', (d) => x_scale(d[1]) - x_scale(0))
+        .attr('height', y_scale.bandwidth())
+        .attr('fill', (d, i) => (i === 0 ? '#e50914' : '#cfcfcf'))
+
+      g.append('text')
+        .attr('x', 192)
+        .attr('y', (d) => y_scale(d[0]) + y_scale.bandwidth() / 2)
+        .attr('text-anchor', 'end')
+        .attr('dominant-baseline', 'middle')
+        .style('font-size', '13px')
+        .text((d) => d[0])
+
+      g.append('text')
+        .attr('x', (d) => x_scale(d[1]) + 6)
+        .attr('y', (d) => y_scale(d[0]) + y_scale.bandwidth() / 2)
+        .attr('dominant-baseline', 'middle')
+        .style('font-size', '13px')
+        .text((d) => Math.round(d[1] / 1e6) + 'M')
+
+      d3.select('#app').append(() => svg.node())
+    }
+
+    main().catch((error) => {
+      console.error(error)
+      d3.select('#app').append('p').attr('class', 'error').text(error.message)
+    })
+  </script>
+</body>
+</html>
