@@ -7,7 +7,8 @@
   <style>
     body { font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px; }
     h1 { font-size: 28px; margin: 0 0 6px; }
-    .subtitle { color: #777; font-size: 14px; margin: 0 0 16px; }
+    .subtitle { color: #777; font-size: 14px; margin: 0 0 4px; }
+    .takeaway { font-size: 15px; margin: 0 0 16px; }
     .source { color: #777; font-size: 12px; margin-top: 12px; }
     .error { color: #b00020; font-size: 14px; }
   </style>
@@ -15,6 +16,7 @@
 <body>
   <h1>Top 10 Netflix Movies by Views</h1>
   <p class="subtitle">Views per movie, Jan–Jun 2025</p>
+  <p class="takeaway" id="takeaway"></p>
   <div id="app"></div>
   <p class="source">Source: Netflix, What We Watched (Jan–Jun 2025)</p>
 
@@ -24,10 +26,12 @@
       const raw = await d3.csv('NetflixMovies_added.csv')
       console.log('raw rows', raw.length, raw.columns)
 
-      const movies = raw.map((d) => ({
-        title: d.Simple_Title || d.Title,
-        views: +d.Views,
-      }))
+      const movies = raw
+        .map((d) => ({
+          title: d.Simple_Title || d.Title,
+          views: +d.Views,
+        }))
+        .filter((d) => d.views > 0)
 
       const views_by_title = d3.rollup(
         movies,
@@ -39,6 +43,10 @@
         .sort((a, b) => d3.descending(a[1], b[1]))
         .slice(0, 10)
       console.log('top movies', top_movies)
+
+      d3.select('#takeaway').text(
+        `${top_movies[0][0]} leads with ${Math.round(top_movies[0][1] / 1e6)} million views, ahead of ${top_movies[1][0]} at ${Math.round(top_movies[1][1] / 1e6)} million.`
+      )
 
       const svg = d3.create('svg').attr('viewBox', [0, 0, 600, 340])
 
